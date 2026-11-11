@@ -11,12 +11,16 @@ import java.util.concurrent.TimeUnit
  * The archive in assets was prepared on the build machine:
  *  - debug info stripped, dev tools removed;
  *  - Termux paths rewritten to /data/data/ru.ruarm/files (so the app id must stay "ru.ruarm");
+ *  - FreeType (+ libpng, brotli, bzip2, zlib) and fontconfig (+ expat, minimal usr/etc/fonts/fonts.conf)
+ *    added to usr/lib: without FreeType Wine has no fonts at all,
+ *    text measures 0 px and newer Inno Setup builds fail with "BaseUnitX = 0"; with FreeType but
+ *    without fontconfig every Wine process crashes on a NULL call (explorer.exe respawn loop);
  *  - i386 kernel32 export "IsWow64Process2" renamed, so old Inno Setup builds see an x64 CPU
  *    instead of ARM64 and do not refuse to install.
  * Executing it from the app's data dir requires targetSdk 28 (same as Winlator/GameNative).
  */
 object WineRunner {
-    private const val VERSION = "hangover-11.16-ruarm2"
+    private const val VERSION = "hangover-11.16-ruarm4"
     private const val ASSET = "wine.tar.xz"
 
     private fun files(ctx: Context) = ctx.filesDir
@@ -87,6 +91,7 @@ object WineRunner {
             "WINEDLLOVERRIDES" to "mscoree,mshtml=;winemenubuilder.exe=d",
             "DISPLAY" to "",
             "LANG" to "ru_RU.UTF-8",
+            "FONTCONFIG_FILE" to "${usr(ctx).absolutePath}/etc/fonts/fonts.conf",
         )
     }
 

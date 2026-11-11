@@ -18,9 +18,14 @@ and from the Termux build recipes linked here.
 | GNU libiconv | 1.19.1 | LGPL-2.1-or-later | https://www.gnu.org/software/libiconv/ |
 | LLVM libc++ | 30 | Apache-2.0 WITH LLVM-exception | https://libcxx.llvm.org/ |
 | libandroid-spawn | 0.3 | BSD-2-Clause | https://github.com/termux/termux-packages |
+| FreeType | 2.15.0 | FTL or GPL-2.0-only | https://freetype.org/ |
+| fontconfig | 2.18.3 | MIT (HPND-style) | https://www.freedesktop.org/wiki/Software/fontconfig/ |
+| Expat (libexpat) | 2.10.0 | MIT | https://libexpat.github.io/ |
+| libpng | 1.6.59 | libpng-2.0 | http://www.libpng.org/pub/png/libpng.html |
+| Brotli (decoder) | 1.2.1 | MIT | https://github.com/google/brotli |
 
 Termux build recipes: https://github.com/termux/termux-packages (packages `hangover-wine`, `hangover-wowbox64`,
-`7zip`, `innoextract`, `boost`, `liblzma`, `libbz2`, `zlib`, `libiconv`, `libc++`, `libandroid-spawn`).
+`7zip`, `innoextract`, `boost`, `liblzma`, `libbz2`, `zlib`, `libiconv`, `libc++`, `libandroid-spawn`, `freetype`, `fontconfig`, `libexpat`, `libpng`, `brotli`).
 
 Modifications made for RUarm (binary patches only, no source changes):
 - shared-library file names and `DT_NEEDED`/`SONAME` entries renamed so they can be packaged as `lib*.so`;
