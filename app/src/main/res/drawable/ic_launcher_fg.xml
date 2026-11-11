@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Монограмма RU и тонкая полоса-триколор снизу -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.82" android:scaleY="0.82" android:pivotX="54" android:pivotY="54">
+    <!-- R -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6.5" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M33,37 L33,63 M33,37 L42,37 C48,37 51,40.5 51,44.5 C51,48.5 48,52 42,52 L33,52 M42,52 L51,63" />
+    <!-- U -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6.5" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M58,37 L58,53.5 C58,59.5 61.5,63 66.5,63 C71.5,63 75,59.5 75,53.5 L75,37" />
+    <!-- триколор -->
+    <path android:fillColor="#FFF4F5F8" android:pathData="M36,70.5h12v3.5h-12z" />
+    <path android:fillColor="#FF2F6BFF" android:pathData="M48,70.5h12v3.5h-12z" />
+    <path android:fillColor="#FFE5383B" android:pathData="M60,70.5h12v3.5h-12z" />
+    </group>
+</vector>
