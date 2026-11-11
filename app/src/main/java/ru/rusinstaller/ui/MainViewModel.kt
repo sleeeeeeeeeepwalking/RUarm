@@ -288,6 +288,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     var lastPatcher by mutableStateOf<String?>(null); private set
     /** Why the program could not be started in GameNative automatically (null = started). */
     @Volatile var launchError: String? = null; private set
+    /** Texts of message boxes the installer showed (answered automatically) — shown on the Done screen. */
+    val installerMessages = mutableStateListOf<String>()
     @Volatile private var lastLaunch: Triple<Int, String, String>? = null
 
     fun relaunch() {
@@ -300,15 +302,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val g = game ?: return
         val name = input?.name ?: "?"
         lastPatcher = p.patcherExe
+        installerMessages.clear()
         val runArgs = extracted?.runArgs ?: ""
         launchError = null
         runWork("Устанавливаю…") { log ->
             log("Копирую ${p.items.size} файлов в ${g.name}")
             val r = if (p.viaWine) {
                 val src = input?.file ?: throw IllegalStateException("Нет файла русификатора")
-                Installer.installViaWine(ctx, p, g, src, name, log) { s ->
-                    viewModelScope.launch(Dispatchers.Main) { workTitle = s }
-                }
+                Installer.installViaWine(
+                    ctx, p, g, src, name, log,
+                    status = { s -> viewModelScope.launch(Dispatchers.Main) { workTitle = s } },
+                    onMessage = { m -> viewModelScope.launch(Dispatchers.Main) { if (m !in installerMessages) installerMessages += m } },
+                )
             } else Installer.install(p, g, name, ::progress)
             log("Готово")
             val exe = p.patcherExe

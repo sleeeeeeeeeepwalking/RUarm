@@ -539,7 +539,17 @@ private fun DoneScreen(vm: MainViewModel) {
             Spacer(Modifier.height(14.dp))
             if (r != null) Text("${r.gameName} теперь на русском", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            Text("Если язык не сменился — поставь русский в настройках самой игры.", color = Muted, style = MaterialTheme.typography.bodySmall)
+            if (vm.installerMessages.isEmpty()) {
+                Text("Если язык не сменился — поставь русский в настройках самой игры.", color = Muted, style = MaterialTheme.typography.bodySmall)
+            } else {
+                Spacer(Modifier.height(10.dp))
+                Box(Modifier.widthIn(max = 640.dp)) {
+                    Notice(
+                        "Сообщение от авторов русификатора:\n" + vm.installerMessages.joinToString("\n\n"),
+                        Warn, Icons.Filled.Info,
+                    )
+                }
+            }
             Spacer(Modifier.height(28.dp))
             Box(Modifier.widthIn(max = 360.dp)) { BigButton("Отлично") { vm.home() } }
         }

@@ -98,7 +98,7 @@ object Installer {
      */
     suspend fun installViaWine(
         ctx: android.content.Context, plan: Plan, game: Game, installer: File, fileName: String,
-        log: (String) -> Unit, status: (String) -> Unit,
+        log: (String) -> Unit, status: (String) -> Unit, onMessage: (String) -> Unit = {},
     ): InstallRecord {
         if (isPrivilegedPath(game.path))
             throw java.io.IOException("Игры в Android/data пока нельзя русифицировать через встроенный Wine.")
@@ -133,13 +133,29 @@ object Installer {
 
         status("Устанавливаю русификатор…")
         log("Запускаю установщик в тихом режиме в папку игры")
+        // message boxes from the installer's own script would wait forever for a click: answer them
+        val clicker = WineRunner.startClicker(ctx) { msg ->
+            log("Окно установщика: $msg")
+            if (msg.isNotBlank()) onMessage(msg)
+        }
+        val stalled = java.util.concurrent.atomic.AtomicBoolean(false)
         val watcher = Thread {
             var last = ""
+            var lastSize = -1L
+            var lastChange = System.currentTimeMillis()
             while (!Thread.currentThread().isInterrupted) {
                 runCatching {
-                    val line = setupLog.takeIf { it.exists() }?.readLines(Charsets.UTF_8)
-                        ?.lastOrNull { it.contains("Dest filename:") }?.substringAfter("Dest filename:")?.trim()
+                    val size = if (setupLog.exists()) setupLog.length() else 0L
+                    if (size != lastSize) { lastSize = size; lastChange = System.currentTimeMillis() }
+                    val line = readSetupLog(setupLog).lines()
+                        .lastOrNull { it.contains("Dest filename:") }?.substringAfter("Dest filename:")?.trim()
                     if (line != null && line != last) { last = line; status("Устанавливаю: ${line.substringAfterLast('\\')}") }
+                    // nothing happened for 20 minutes (even huge files are logged around their copy): give up
+                    if (System.currentTimeMillis() - lastChange > 20 * 60_000L) {
+                        stalled.set(true)
+                        log("Установщик 20 минут ничего не делает — останавливаю")
+                        WineRunner.killServer(ctx)
+                    }
                 }
                 try { Thread.sleep(1500) } catch (_: InterruptedException) { break }
             }
@@ -155,9 +171,11 @@ object Installer {
             )
         } finally {
             watcher.interrupt()
+            clicker?.destroy()
             WineRunner.killServer(ctx)
         }
-        val logText = runCatching { setupLog.readText(Charsets.UTF_8) }.getOrDefault("")
+        val logText = readSetupLog(setupLog)
+        if (stalled.get()) log("Установка была остановлена из-за зависания")
         setup.delete()
 
         // whatever appeared in the game folder belongs to the russifier (incl. its own uninstaller)
@@ -174,6 +192,14 @@ object Installer {
         }
         log("Установщик сообщил: Installation process succeeded")
         return record(added, dirs).also(::save)
+    }
+
+    /** Inno Setup 6 writes its log in UTF-8 (with BOM), older ANSI builds in the Windows code page (cp1251 here). */
+    private fun readSetupLog(f: File): String {
+        if (!f.exists()) return ""
+        val b = runCatching { f.readBytes() }.getOrDefault(ByteArray(0))
+        val utf8Bom = b.size >= 3 && b[0] == 0xEF.toByte() && b[1] == 0xBB.toByte() && b[2] == 0xBF.toByte()
+        return if (utf8Bom) String(b, 3, b.size - 3, Charsets.UTF_8) else String(b, charset("windows-1251"))
     }
 
     suspend fun restore(r: InstallRecord, progress: (Int, Int, String) -> Unit): InstallRecord {

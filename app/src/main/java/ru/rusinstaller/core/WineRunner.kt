@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
  * Executing it from the app's data dir requires targetSdk 28 (same as Winlator/GameNative).
  */
 object WineRunner {
-    private const val VERSION = "hangover-11.16-ruarm1"
+    private const val VERSION = "hangover-11.16-ruarm2"
     private const val ASSET = "wine.tar.xz"
 
     private fun files(ctx: Context) = ctx.filesDir
@@ -113,6 +113,30 @@ object WineRunner {
         reader.join(2000)
         return p.exitValue()
     }
+
+    /**
+     * Starts ruarm_clicker.exe next to an installer: it presses OK/Yes in message boxes that installer
+     * scripts show even in silent mode (nobody can see them without a display) and reports their text.
+     * @param onMessage receives the text of every dialog it closed
+     */
+    fun startClicker(ctx: Context, onMessage: (String) -> Unit): Process? = runCatching {
+        val exe = File(driveC(ctx), "ruarm/clicker.exe")
+        exe.parentFile?.mkdirs()
+        ctx.assets.open("ruarm_clicker.exe").use { i -> exe.outputStream().use { o -> i.copyTo(o) } }
+        val pb = ProcessBuilder(File(bin(ctx), "wine").absolutePath, "C:\\ruarm\\clicker.exe").redirectErrorStream(true)
+        pb.environment().apply { remove("WAYLAND_DISPLAY"); putAll(env(ctx)) }
+        pb.directory(files(ctx))
+        val p = pb.start()
+        p.outputStream.close()
+        Thread {
+            runCatching {
+                p.inputStream.bufferedReader(Charsets.UTF_8).forEachLine { l ->
+                    if (l.startsWith("MSG|")) onMessage(l.removePrefix("MSG|").trim())
+                }
+            }
+        }.apply { isDaemon = true; start() }
+        p
+    }.getOrNull()
 
     fun killServer(ctx: Context) {
         runCatching {
