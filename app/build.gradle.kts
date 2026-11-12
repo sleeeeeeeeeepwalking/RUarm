@@ -13,8 +13,8 @@ android {
         applicationId = "ru.ruarm"
         minSdk = 30
         targetSdk = 28
-        versionCode = 6
-        versionName = "1.0.2"
+        versionCode = 7
+        versionName = "1.0.3"
         ndk { abiFilters += "arm64-v8a" }
     }
 

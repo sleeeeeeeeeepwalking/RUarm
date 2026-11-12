@@ -285,7 +285,7 @@ private fun SettingsScreen(vm: MainViewModel) {
                 when (vm.shizuku) {
                     ShizukuManager.State.READY -> Tile("Shizuku", "Подключён", icon = Icons.Filled.CheckCircle, iconTint = Good)
                     ShizukuManager.State.NO_PERMISSION -> Tile("Shizuku", "Нажми, чтобы разрешить", icon = Icons.Filled.Warning, iconTint = Warn) { ShizukuManager.requestPermission() }
-                    ShizukuManager.State.NOT_RUNNING -> Tile("Shizuku", "Нужен только для игр в Android/data (GameHub)", icon = Icons.Filled.Info, iconTint = Muted, trailing = { Arrow() }) { shizukuHelp = true }
+                    ShizukuManager.State.NOT_RUNNING -> Tile("Shizuku", "Нужен только для игр в Android/data", icon = Icons.Filled.Info, iconTint = Muted, trailing = { Arrow() }) { shizukuHelp = true }
                 }
             }
             items(vm.libraries) { lib ->
@@ -318,7 +318,7 @@ private fun SettingsScreen(vm: MainViewModel) {
             title = { Text("Shizuku") },
             text = {
                 Text(
-                    "Нужен, только если игры лежат в Android/data (например, у GameHub).\n\n" +
+                    "Нужен, только если игры лежат в Android/data.\n\n" +
                         "1. Установи Shizuku.\n2. Включи «Отладку по Wi-Fi» в параметрах разработчика.\n" +
                         "3. Запусти Shizuku через беспроводную отладку.\n4. Вернись сюда и нажми «Разрешить»."
                 )

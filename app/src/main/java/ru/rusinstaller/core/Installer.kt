@@ -121,6 +121,22 @@ object Installer {
             InstallRecord(id, game.name, game.path, fileName, id.toLong(), added, replaced, dirs, restored)
         save(record(emptyList(), emptyList()))
 
+        // Files another app created on shared storage (GameHub's downloads) can be deleted, but renaming a new
+        // file over them fails with EPERM: MediaProvider keeps a database row for the path. Inno Setup replaces
+        // files by rename, so re-create every file it will replace as our own copy first.
+        if (replaced.isNotEmpty()) status("Готовлю файлы игры к замене…")
+        for (rel in replaced) {
+            val t = File(game.path, rel)
+            val bak = File(backupFiles, rel)
+            if (!t.delete()) continue
+            try {
+                bak.copyTo(t, overwrite = true)
+            } catch (e: Exception) {
+                runCatching { bak.copyTo(t, overwrite = true) }
+                throw java.io.IOException("Не удалось подготовить файл $rel: ${e.message}. Оригинал сохранён в ${bak.absolutePath}")
+            }
+        }
+
         status("Готовлю встроенный Wine…")
         WineRunner.ensureInstalled(ctx, log)
         WineRunner.ensurePrefix(ctx, log)

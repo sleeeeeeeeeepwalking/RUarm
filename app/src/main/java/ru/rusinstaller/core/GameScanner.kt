@@ -25,7 +25,14 @@ object GameScanner {
 
     fun volumeLabel(path: String) = if (path.startsWith("/storage/emulated/")) "память" else "SD-карта"
 
-    private fun sourceOf(path: String): String {
+    /** [common] is ".../steamapps/common"; GameHub's downloader leaves "steamapps/.steamkit-locks" next to it. */
+    private suspend fun sourceOf(common: String): String {
+        val steamapps = common.substringBeforeLast('/')
+        val gameHub = Backends.forPathOrNull(steamapps)?.list(steamapps)?.any { it.name == ".steamkit-locks" } == true
+        return if (gameHub) "GameHub · ${volumeLabel(common)}" else sourceByName(common)
+    }
+
+    private fun sourceByName(path: String): String {
         val p = path.lowercase()
         val app = when {
             "gamenative" in p || "pluvia" in p -> "GameNative"
@@ -56,15 +63,15 @@ object GameScanner {
         if (shizuku != null) {
             val b = ShizukuBackend(shizuku)
             for (d in launcherDirs) findSteamCommon(b, d, 0, 8, commons, skipTop = false)
-        } else {
-            notes += "Игры GameHub лежат в Android/data — чтобы их найти, включи Shizuku."
         }
+        // without Shizuku Android/data is skipped; GameHub (site build) can install into shared storage instead
 
         val games = ArrayList<Game>()
         for (c in commons) {
             val b = Backends.forPathOrNull(c) ?: continue
+            val src = sourceOf(c)
             b.list(c)?.filter { it.isDir && it.name.lowercase() !in NOT_GAMES }?.forEach {
-                games += Game(it.name, "$c/${it.name}", sourceOf(c))
+                games += Game(it.name, "$c/${it.name}", src)
             }
         }
         for (lib in customLibraries) {
@@ -74,8 +81,8 @@ object GameScanner {
         }
         val unique = games.distinctBy { it.path }.sortedBy { it.name.lowercase() }
         if (unique.isEmpty()) {
-            notes += "Игры не найдены. В GameNative включи «внешнее хранилище» для установки игр " +
-                "или выбери папку игры вручную."
+            notes += "Игры не найдены. В GameNative включи «внешнее хранилище», в GameHub выбери «Папку установки» " +
+                "на SD-карте или в памяти — или выбери папку игры вручную."
         }
         return ScanResult(unique, notes)
     }
